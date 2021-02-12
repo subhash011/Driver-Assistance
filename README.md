@@ -1,4 +1,4 @@
-# Pothole Detector
+# Driver Assistance
 
 OELP Project - 6th semester IIT Palakkad.
 
