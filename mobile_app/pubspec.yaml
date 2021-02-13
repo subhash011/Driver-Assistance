@@ -30,6 +30,8 @@ dependencies:
   provider: ^4.3.3
   shared_preferences: ^0.5.12+4
   sensors: ^0.4.2+6
+  geolocator: ^6.2.0
+  google_maps_flutter: ^1.2.0 # TODO: Add API key in android and IOS
   rxdart: ^0.25.0
 
 dev_dependencies:
