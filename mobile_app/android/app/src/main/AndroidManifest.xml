@@ -9,6 +9,8 @@
         android:name="io.flutter.app.FlutterApplication"
         android:label="PotholeDetector"
         android:icon="@mipmap/ic_launcher">
+        <meta-data  android:name="com.google.android.geo.API_KEY"
+                    android:value="AIzaSyAR9SQs3XVYkEvSys9VlfJQr2xGGtAXNvQ" />
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"
