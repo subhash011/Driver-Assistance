@@ -118,3 +118,5 @@ app.*.symbols
 
 # Datasets
 dataset/
+papers/
+**/.ipynb_checkpoints/
