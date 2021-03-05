@@ -1,3 +1,5 @@
+// @dart=2.10
+
 import 'package:flutter/material.dart';
 import 'package:PotholeDetector/widgets/maps/secrets.dart'; // Stores the Google Maps API Key
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
