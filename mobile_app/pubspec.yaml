@@ -31,13 +31,14 @@ dependencies:
   shared_preferences: ^0.5.12+4
   sensors: ^0.4.2+6
   geolocator: ^6.2.0
-  google_maps_flutter: ^1.2.0 # TODO: Add API key in android and IOS
+  google_maps_flutter: ^1.2.0
   rxdart: ^0.25.0
   flutter_plugin_android_lifecycle: ^1.0.11
   google_maps_flutter_platform_interface: ^1.2.0
   flutter_polyline_points: ^0.2.4
   geocoding: ^1.0.5
   geocoder: ^0.2.1
+  get_it: ^6.0.0
 
 dev_dependencies:
   flutter_test:
