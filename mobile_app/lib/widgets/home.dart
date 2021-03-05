@@ -2,7 +2,7 @@ import 'package:PotholeDetector/widgets/accelerometer/accelerometer.dart';
 import 'package:PotholeDetector/widgets/maps/maps.dart';
 import 'package:flutter/material.dart';
 
-final List<Widget> _allPages = <Widget>[Map(), Accelerometer()];
+final List<Widget> _allPages = <Widget>[MapView(), Accelerometer()];
 final List<String> _titles = ["Maps", "Accelerometer"];
 
 class Home extends StatelessWidget {
