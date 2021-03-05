@@ -1,14 +1,13 @@
-
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart';
 
 class Place {
-  String streetNumber;
-  String street;
-  String city;
-  String zipCode;
+  String? streetNumber;
+  String? street;
+  String? city;
+  String? zipCode;
 
   Place({
     this.streetNumber,

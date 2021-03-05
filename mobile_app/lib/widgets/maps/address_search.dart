@@ -1,3 +1,5 @@
+// @dart=2.10
+
 import 'package:PotholeDetector/widgets/maps/place_service.dart';
 import 'package:flutter/material.dart';
 

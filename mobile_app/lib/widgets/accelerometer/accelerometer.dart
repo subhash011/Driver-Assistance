@@ -1,5 +1,6 @@
-import 'dart:async';
+// @dart=2.10
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:sensors/sensors.dart';
 
