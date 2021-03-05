@@ -5,8 +5,8 @@ import 'package:PotholeDetector/widgets/maps/secrets.dart'; // Stores the Google
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoder/geocoder.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:uuid/uuid.dart';
 import 'dart:math' show cos, sqrt, asin;
 
 class MapView extends StatefulWidget {
@@ -55,6 +55,9 @@ class _MapViewState extends State<MapView> {
         child: TextField(
           onChanged: (value) {
             locationCallback(value);
+          },
+          onTap: () async {
+            print(controller.text);
           },
           controller: controller,
           focusNode: focusNode,
@@ -231,15 +234,6 @@ class _MapViewState extends State<MapView> {
             100.0,
           ),
         );
-
-        // Calculating the distance between the start and the end positions
-        // with a straight path, without considering any route
-        // double distanceInMeters = await Geolocator().bearingBetween(
-        //   startCoordinates.latitude,
-        //   startCoordinates.longitude,
-        //   destinationCoordinates.latitude,
-        //   destinationCoordinates.longitude,
-        // );
 
         await _createPolylines(startCoordinates, destinationCoordinates);
 
@@ -448,7 +442,12 @@ class _MapViewState extends State<MapView> {
                                             destinationAddressController,
                                         focusNode: desrinationAddressFocusNode,
                                         width: width,
-                                        locationCallback: (String value) {
+                                        locationCallback: (String value) async {
+                                          var addresses = await Geocoder.local
+                                              .findAddressesFromQuery(value);
+                                          var first = addresses.first;
+                                          print(
+                                              "${first.featureName} : ${first.coordinates}");
                                           setState(() {
                                             _destinationAddress = value;
                                           });
