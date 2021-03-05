@@ -7,6 +7,17 @@ class Obstacles {
   Sensors sensor = Sensors();
 
   var _signal = BehaviorSubject<int>.seeded(0);
+  /*
+  signal code (currently only 0 and 1)
+  {
+    0: No Obstacle
+    1: Pothole
+    2: Speed Breaker
+    3: Sharp Turn
+    4: Construction
+    5: Others
+  }
+  */
 
   get accelerometer {
     return sensor.accelerometer;
@@ -17,7 +28,17 @@ class Obstacles {
   }
 
   get signal {
-    return _signal;
+    return _signal.scan((accumulated, value, index) => accumulated + value, 0); // 'reduce' only for testing signal.
+  }
+
+  rule (acc, [userAcc]) {
+    var mag = pow(acc[0], 2) + pow(acc[1], 2) + pow(acc[2], 2);
+    mag = sqrt(mag);
+    if (mag > 13) {
+      _signal.add(1);
+    } else {
+      _signal.add(0);
+    }
   }
 
   Obstacles() {
@@ -25,14 +46,7 @@ class Obstacles {
     BehaviorSubject accelerometer = sensor.accelerometer;
     // BehaviorSubject userAccelerometer = sensor.userAccelerometer;
     accelerometer.stream.listen((event) {
-      var mag = pow(event[0], 2) + pow(event[1], 2) + pow(event[2], 2);
-      mag = sqrt(mag);
-      if (mag > 11) {
-        _signal.add(1);
-        print("Obstacle Detected");
-      } else {
-        _signal.add(0);
-      }
+      rule(event);
     });
   }
 
