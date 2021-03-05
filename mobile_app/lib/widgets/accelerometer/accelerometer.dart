@@ -10,7 +10,7 @@ class Accelerometer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: StreamBuilder(
-        stream: obs.accelerometer,
+        stream: obs.signal,
         builder: (BuildContext context, AsyncSnapshot snap) {
           return Text('${snap.data}');
         },

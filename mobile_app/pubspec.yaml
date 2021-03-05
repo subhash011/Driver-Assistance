@@ -39,6 +39,7 @@ dependencies:
   geocoding: ^1.0.5
   geocoder: ^0.2.1
   get_it: ^6.0.0
+  vector_math: ^2.1.0
 
 dev_dependencies:
   flutter_test:
