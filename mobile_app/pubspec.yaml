@@ -37,7 +37,7 @@ dependencies:
   google_maps_flutter_platform_interface: ^1.2.0
   flutter_polyline_points: ^0.2.4
   geocoding: ^1.0.5
-  geocoder: ^0.2.1
+  flutter_mapbox_autocomplete: ^1.0.3
 
 dev_dependencies:
   flutter_test:
