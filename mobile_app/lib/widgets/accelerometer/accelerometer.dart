@@ -1,8 +1,9 @@
 import 'package:PotholeDetector/services/obstacle.dart';
+import 'package:PotholeDetector/services/voice.dart';
 import 'package:flutter/material.dart';
-import 'package:sensors/sensors.dart';
 
 Obstacles obs = Obstacles();
+Voice voice = Voice();
 
 class Accelerometer extends StatelessWidget {
 
@@ -12,64 +13,17 @@ class Accelerometer extends StatelessWidget {
       child: StreamBuilder(
         stream: obs.signal,
         builder: (BuildContext context, AsyncSnapshot snap) {
+          /*
+          **Test Voice**
+            int x = snap.data;
+            int y = x ?? 0;
+            if ((y % 10) == 1) {
+              voice.speak("Hello from the AI");
+            }
+           */
           return Text('${snap.data}');
         },
       ),
     );
   }
 }
-
-
-// class Accelerometer extends StatefulWidget {
-//   @override
-//   _AccelerometerState createState() => _AccelerometerState();
-// }
-//
-// class _AccelerometerState extends State<Accelerometer> {
-//   List<double> _accelerometerValues;
-//   List<double> _userAccelerometerValues;
-//
-//   List<StreamSubscription<dynamic>> _streamSubscriptions =
-//       <StreamSubscription<dynamic>>[];
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     final List<String> accelerometer =
-//         _accelerometerValues?.map((double v) => v.toStringAsFixed(1))?.toList();
-//     final List<String> userAccelerometer = _userAccelerometerValues
-//         ?.map((double v) => v.toStringAsFixed(1))
-//         ?.toList();
-//     return Scaffold(
-//       body: Center(
-//         child: Text(
-//             "User Accelerometer: $userAccelerometer \n "
-//             "Accelerometer: $accelerometer"),
-//       ),
-//     );
-//   }
-//
-//   @override
-//   void dispose() {
-//     super.dispose();
-//     for (StreamSubscription<dynamic> subscription in _streamSubscriptions) {
-//       subscription.cancel();
-//     }
-//   }
-//
-//   @override
-//   void initState() {
-//     super.initState();
-//     _streamSubscriptions
-//         .add(accelerometerEvents.listen((AccelerometerEvent event) {
-//       setState(() {
-//         _accelerometerValues = <double>[event.x, event.y, event.z];
-//       });
-//     }));
-//     _streamSubscriptions
-//         .add(userAccelerometerEvents.listen((UserAccelerometerEvent event) {
-//       setState(() {
-//         _userAccelerometerValues = <double>[event.x, event.y, event.z];
-//       });
-//     }));
-//   }
-// }
