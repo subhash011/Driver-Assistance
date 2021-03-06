@@ -1,6 +1,7 @@
-import 'dart:math';
 import 'package:rxdart/rxdart.dart';
 import 'package:sensors/sensors.dart';
+import 'package:vector_math/vector_math.dart';
+
 
 class Obstacles {
 
@@ -28,13 +29,14 @@ class Obstacles {
   }
 
   get signal {
-    return _signal.scan((accumulated, value, index) => accumulated + value, 0); // 'reduce' only for testing signal.
+    return _signal
+        .distinct()
+        .scan((accumulated, value, index) => accumulated + value, 0); // 'reduce' only for testing signal.
   }
 
-  rule (acc, [userAcc]) {
-    var mag = pow(acc[0], 2) + pow(acc[1], 2) + pow(acc[2], 2);
-    mag = sqrt(mag);
-    if (mag > 13) {
+  rule (acc, userAcc) {
+    var mag = userAcc.distanceTo(Vector3.zero());
+    if (mag > 7) {
       _signal.add(1);
     } else {
       _signal.add(0);
@@ -44,9 +46,10 @@ class Obstacles {
   Obstacles() {
     // ignore: close_sinks
     BehaviorSubject accelerometer = sensor.accelerometer;
-    // BehaviorSubject userAccelerometer = sensor.userAccelerometer;
-    accelerometer.stream.listen((event) {
-      rule(event);
+    // ignore: close_sinks
+    BehaviorSubject userAccelerometer = sensor.userAccelerometer;
+    userAccelerometer.stream.listen((event) {
+      rule(Vector3.zero(), event);
     });
   }
 
@@ -70,15 +73,13 @@ class Sensors {
 
   Sensors() {
     accelerometerEvents.listen((AccelerometerEvent event) {
-      List<double> accelerometerValues = <double>[event.x, event.y, event.z]
-          .map((e) => double.parse(e.toStringAsFixed(3))).toList();
-      _accelerometerSub.add(accelerometerValues);
+      List<double> accelerometerValues = <double>[event.x, event.y, event.z];
+      _accelerometerSub.add(Vector3.array(accelerometerValues));
     });
 
     userAccelerometerEvents.listen((UserAccelerometerEvent event) {
-      List<double> accelerometerValues = <double>[event.x, event.y, event.z]
-          .map((e) => double.parse(e.toStringAsFixed(3))).toList();
-      _userAccelerometerSub.add(accelerometerValues);
+      List<double> accelerometerValues = <double>[event.x, event.y, event.z];
+      _userAccelerometerSub.add(Vector3.array(accelerometerValues));
     });
   }
 

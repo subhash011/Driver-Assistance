@@ -1,3 +1,5 @@
+mobile_app/lib/test.dart
+
 # Miscellaneous
 *.class
 *.lock
