@@ -1,5 +1,11 @@
 mobile_app/lib/test.dart
 
+#Django
+
+Backend/.idea
+Backend/venv
+Backend/db.sqlite3
+
 # Miscellaneous
 *.class
 *.lock

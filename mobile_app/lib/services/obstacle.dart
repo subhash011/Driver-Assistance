@@ -8,6 +8,7 @@ class Obstacles {
   Sensors sensor = Sensors();
 
   var _signal = BehaviorSubject<int>.seeded(0);
+
   /*
   signal code (currently only 0 and 1)
   {
@@ -15,8 +16,7 @@ class Obstacles {
     1: Pothole
     2: Speed Breaker
     3: Sharp Turn
-    4: Construction
-    5: Others
+    4: Others
   }
   */
 
