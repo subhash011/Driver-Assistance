@@ -1,3 +1,4 @@
+import 'package:PotholeDetector/config.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:sensors/sensors.dart';
 import 'package:vector_math/vector_math.dart';
@@ -35,6 +36,7 @@ class Obstacles {
   }
 
   double calcDev(Vector3 acc, Vector3 userAcc) {
+    // Jerk along the axis of gravity (For speed-beakers and potholes ).
     double dot = acc.dot(userAcc);
     double mag = acc.distanceTo(Vector3.zero());
     double deviation = dot / mag;
@@ -42,6 +44,7 @@ class Obstacles {
   }
 
   sampleDeviations(values) {
+    // Sampling over a range of values
     List<double> deviations = [];
     values.forEach((element) {
       double deviation = calcDev(element[0], element[1]);
@@ -57,7 +60,7 @@ class Obstacles {
     print("###############################");
     print("mean = $mean");
     print("###############################");
-    if (mean>= 3) {
+    if (mean>= Config.meanThreshold) {
       _signal.add(1);
     } else {
       _signal.add(0);
@@ -71,7 +74,7 @@ class Obstacles {
     BehaviorSubject<Vector3> userAccelerometer = sensor.userAccelerometer;
     accelerometer.stream.
     zipWith(userAccelerometer.stream, (t, s) => [t, s]).
-    bufferTime(Duration(seconds: 2)).
+    bufferTime(Duration(seconds: Config.samplingRate)).
     listen((event) {
       rule(event);
     });
