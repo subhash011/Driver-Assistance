@@ -1,5 +1,6 @@
 // @dart=2.10
 
+import 'package:PotholeDetector/services/maps.dart';
 import 'package:flutter/material.dart';
 import 'package:PotholeDetector/widgets/maps/secrets.dart'; // Stores the Google Maps API Key
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -25,6 +26,7 @@ class MapView extends StatefulWidget {
 class _MapViewState extends State<MapView> {
   CameraPosition _initialLocation = CameraPosition(target: LatLng(0.0, 0.0));
   GoogleMapController mapController;
+  MapService mapService = MapService();
 
   Position _currentPosition;
   String _currentAddress;
@@ -38,8 +40,6 @@ class _MapViewState extends State<MapView> {
   String _startAddress = '';
   String _destinationAddress = '';
   String _placeDistance;
-
-  Set<Marker> markers = {};
 
   PolylinePoints polylinePoints;
   Map<PolylineId, Polyline> polylines = {};
@@ -116,43 +116,24 @@ class _MapViewState extends State<MapView> {
 
   // Method for retrieving the current location
   _getCurrentLocation() async {
-    await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high)
-        .then((Position position) async {
-      setState(() {
-        _currentPosition = position;
-        print('CURRENT POS: $_currentPosition');
-        mapController.animateCamera(
-          CameraUpdate.newCameraPosition(
-            CameraPosition(
-              target: LatLng(position.latitude, position.longitude),
-              zoom: 18.0,
-            ),
+    Position position = await mapService.getCurrentLocation();
+    setState(() {
+      _currentPosition = position;
+      mapController.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: LatLng(position.latitude, position.longitude),
+            zoom: 18.0,
           ),
-        );
-      });
-      await _getAddress();
-    }).catchError((e) {
-      print(e);
+        ),
+      );
     });
-  }
-
-  // Method for retrieving the address
-  _getAddress() async {
-    try {
-      List<Placemark> p = await placemarkFromCoordinates(
-          _currentPosition.latitude, _currentPosition.longitude);
-
-      Placemark place = p[0];
-
-      setState(() {
-        _currentAddress =
-            "${place.name}, ${place.locality}, ${place.postalCode}, ${place.country}";
-        startAddressController.text = _currentAddress;
-        _startAddress = _currentAddress;
-      });
-    } catch (e) {
-      print(e);
-    }
+    String address = await mapService.getAddress(position);
+    setState(() {
+      _currentAddress = address;
+      startAddressController.text = _currentAddress;
+      _startAddress = _currentAddress;
+    });
   }
 
   // Method for calculating the distance between two places
@@ -176,40 +157,10 @@ class _MapViewState extends State<MapView> {
         Position destinationCoordinates = Position(
             latitude: destinationPlacemark[0].latitude,
             longitude: destinationPlacemark[0].longitude);
-        // Start Location Marker
-        Marker startMarker = Marker(
-          markerId: MarkerId('$startCoordinates'),
-          position: LatLng(
-            startCoordinates.latitude,
-            startCoordinates.longitude,
-          ),
-          infoWindow: InfoWindow(
-            title: 'Start',
-            snippet: _startAddress,
-          ),
-          icon: BitmapDescriptor.defaultMarker,
-        );
-
-        // Destination Location Marker
-        Marker destinationMarker = Marker(
-          markerId: MarkerId('$destinationCoordinates'),
-          position: LatLng(
-            destinationCoordinates.latitude,
-            destinationCoordinates.longitude,
-          ),
-          infoWindow: InfoWindow(
-            title: 'Destination',
-            snippet: _destinationAddress,
-          ),
-          icon: BitmapDescriptor.defaultMarker,
-        );
 
         // Adding the markers to the list
-        markers.add(startMarker);
-        markers.add(destinationMarker);
-
-        print('START COORDINATES: $startCoordinates');
-        print('DESTINATION COORDINATES: $destinationCoordinates');
+        mapService.addMarker(startCoordinates, false, "Start");
+        mapService.addMarker(destinationCoordinates, false, "Destination");
 
         Position _northeastCoordinates;
         Position _southwestCoordinates;
@@ -271,7 +222,6 @@ class _MapViewState extends State<MapView> {
 
         setState(() {
           _placeDistance = totalDistance.toStringAsFixed(2);
-          print('DISTANCE: $_placeDistance km');
         });
 
         return true;
@@ -311,9 +261,8 @@ class _MapViewState extends State<MapView> {
       endLat: destination.latitude,
       endLng: destination.longitude,
     );
-    final List<LatLng> polyPoints = []; // For holding Co-ordinates as LatLng
     final Set<Polyline> polyLines = {}; // For holding instance of Polyline
-    final Set<Marker> markers = {}; // For holding instance of Marker
+
     try {
       // getData() returns a json Decoded data
       var data = await network.getData();
@@ -324,11 +273,10 @@ class _MapViewState extends State<MapView> {
       for (int i = 0; i < ls.lineString.length; i++) {
         polylineCoordinates
             .add(LatLng(ls.lineString[i][1], ls.lineString[i][0]));
-        polyPoints.add(LatLng(ls.lineString[i][1], ls.lineString[i][0]));
       }
 
-      if (polyPoints.length == ls.lineString.length) {
-        setPolyLines(polyPoints, polyLines);
+      if (polylineCoordinates.length == ls.lineString.length) {
+        setPolyLines(polylineCoordinates, polyLines);
       }
     } catch (e) {
       print(e);
@@ -337,7 +285,7 @@ class _MapViewState extends State<MapView> {
     PolylineId id = PolylineId('poly');
     Polyline polyline = Polyline(
       polylineId: id,
-      color: Colors.red,
+      color: Colors.green,
       points: polylineCoordinates,
       width: 3,
     );
@@ -363,7 +311,9 @@ class _MapViewState extends State<MapView> {
           children: <Widget>[
             // Map View
             GoogleMap(
-              markers: markers != null ? Set<Marker>.from(markers) : null,
+              markers: mapService.markers != null
+                  ? Set<Marker>.from(mapService.markers)
+                  : null,
               initialCameraPosition: _initialLocation,
               myLocationEnabled: true,
               myLocationButtonEnabled: false,
@@ -498,7 +448,8 @@ class _MapViewState extends State<MapView> {
                                     startAddressFocusNode.unfocus();
                                     desrinationAddressFocusNode.unfocus();
                                     setState(() {
-                                      if (markers.isNotEmpty) markers.clear();
+                                      if (mapService.markers.isNotEmpty)
+                                        mapService.markers.clear();
                                       if (polylines.isNotEmpty)
                                         polylines.clear();
                                       if (polylineCoordinates.isNotEmpty)
