@@ -39,7 +39,6 @@ class _MapViewState extends State<MapView> {
 
   String _startAddress = '';
   String _destinationAddress = '';
-  String _placeDistance;
 
   PolylinePoints polylinePoints;
   Map<PolylineId, Polyline> polylines = {};
@@ -220,9 +219,7 @@ class _MapViewState extends State<MapView> {
           );
         }
 
-        setState(() {
-          _placeDistance = totalDistance.toStringAsFixed(2);
-        });
+        setState(() {});
 
         return true;
       }
@@ -454,7 +451,6 @@ class _MapViewState extends State<MapView> {
                                         polylines.clear();
                                       if (polylineCoordinates.isNotEmpty)
                                         polylineCoordinates.clear();
-                                      _placeDistance = null;
                                     });
 
                                     try {

@@ -1,11 +1,11 @@
+import 'dart:math';
+
 import 'package:PotholeDetector/config.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:sensors/sensors.dart';
 import 'package:vector_math/vector_math.dart';
 
-
 class Obstacles {
-
   Sensors sensor = Sensors();
 
   var _signal = BehaviorSubject<int>.seeded(0);
@@ -30,9 +30,9 @@ class Obstacles {
   }
 
   get signal {
-    return _signal
-        .distinct()
-        .scan((accumulated, value, index) => accumulated + value, 0); // 'reduce' only for testing signal.
+    return _signal.distinct().scan(
+        (accumulated, value, index) => accumulated + value,
+        0); // 'reduce' only for testing signal.
   }
 
   double calcDev(Vector3 acc, Vector3 userAcc) {
@@ -53,18 +53,36 @@ class Obstacles {
     return deviations;
   }
 
-  rule (values) {
+  rule(values) {
     List<double> deviations = sampleDeviations(values);
-    double mean = deviations
-        .reduce((value, element) => value+element) / deviations.length;
+    double mean = deviations.reduce((value, element) => value + element) /
+        deviations.length;
     // print("###############################");
     // print("mean = $mean");
     // print("###############################");
-    if (mean>= Config.meanThreshold) {
+    if (mean >= Config.meanThreshold) {
       _signal.add(1);
     } else {
       _signal.add(0);
     }
+  }
+
+  reorient(Vector3 accelerometer) {
+    if (accelerometer[1] == 0 && accelerometer[2] == 0) {
+      return Vector3(0, 0, 9.8);
+    }
+    var alpha = atan(accelerometer[1] / accelerometer[2]);
+    var beta = atan(-1 *
+        accelerometer[0] /
+        (sqrt(pow(accelerometer[1], 2) + pow(accelerometer[2], 2))));
+    var x = cos(beta) * accelerometer[0] +
+        sin(beta) * sin(alpha) * accelerometer[1] +
+        cos(alpha) * sin(beta) * accelerometer[2];
+    var y = cos(alpha) * accelerometer[1] - sin(alpha) * accelerometer[2];
+    var z = -1 * sin(beta) * accelerometer[0] +
+        cos(beta) * sin(alpha) * accelerometer[1] +
+        cos(beta) * cos(alpha) * accelerometer[2];
+    return Vector3(x, y, z);
   }
 
   Obstacles() {
@@ -72,10 +90,11 @@ class Obstacles {
     BehaviorSubject<Vector3> accelerometer = sensor.accelerometer;
     // ignore: close_sinks
     BehaviorSubject<Vector3> userAccelerometer = sensor.userAccelerometer;
-    accelerometer.stream.
-    zipWith(userAccelerometer.stream, (t, s) => [t, s]).
-    bufferTime(Duration(milliseconds: Config.samplingRate)).
-    listen((event) {
+    accelerometer.stream
+        .map(reorient)
+        .zipWith(userAccelerometer.stream, (t, s) => [t, s])
+        .bufferTime(Duration(seconds: Config.samplingRate))
+        .listen((event) {
       rule(event);
     });
   }
@@ -84,7 +103,6 @@ class Obstacles {
     _signal.close();
   }
 }
-
 
 class Sensors {
   BehaviorSubject _accelerometerSub = BehaviorSubject<Vector3>();
@@ -114,6 +132,4 @@ class Sensors {
     _accelerometerSub.close();
     _userAccelerometerSub.close();
   }
-
 }
-
