@@ -57,9 +57,9 @@ class Obstacles {
     List<double> deviations = sampleDeviations(values);
     double mean = deviations.reduce((value, element) => value + element) /
         deviations.length;
-    // print("###############################");
-    // print("mean = $mean");
-    // print("###############################");
+    print("###############################");
+    print("mean = $mean");
+    print("###############################");
     if (mean >= Config.meanThreshold) {
       _signal.add(1);
     } else {

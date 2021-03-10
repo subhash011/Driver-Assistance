@@ -1,6 +1,8 @@
 // @dart=2.10
 
 import 'package:PotholeDetector/services/maps.dart';
+import 'package:PotholeDetector/services/obstacle.dart';
+import 'package:PotholeDetector/services/voice.dart';
 import 'package:flutter/material.dart';
 import 'package:PotholeDetector/widgets/maps/secrets.dart'; // Stores the Google Maps API Key
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -291,8 +293,18 @@ class _MapViewState extends State<MapView> {
 
   @override
   void initState() {
+    Obstacles obs = Obstacles();
+    Voice voice = Voice();
     super.initState();
     _getCurrentLocation();
+    obs.signal.stream.listen((event) async {
+      if (event >= 1) {
+        print("Obstacle Detected !!; $event");
+        var location = await mapService.getCurrentLocation();
+        print(location);
+        mapService.addMarker(location);
+      }
+    });
   }
 
   @override
