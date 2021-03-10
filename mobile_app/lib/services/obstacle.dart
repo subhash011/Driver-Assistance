@@ -57,9 +57,9 @@ class Obstacles {
     List<double> deviations = sampleDeviations(values);
     double mean = deviations
         .reduce((value, element) => value+element) / deviations.length;
-    // print("###############################");
-    // print("mean = $mean");
-    // print("###############################");
+    print("###############################");
+    print("mean = $mean");
+    print("###############################");
     if (mean>= Config.meanThreshold) {
       _signal.add(1);
     } else {
@@ -74,7 +74,7 @@ class Obstacles {
     BehaviorSubject<Vector3> userAccelerometer = sensor.userAccelerometer;
     accelerometer.stream.
     zipWith(userAccelerometer.stream, (t, s) => [t, s]).
-    bufferTime(Duration(milliseconds: Config.samplingRate)).
+    bufferTime(Duration(seconds: Config.samplingRate)).
     listen((event) {
       rule(event);
     });
