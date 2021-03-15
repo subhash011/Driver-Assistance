@@ -280,7 +280,6 @@ class _MapViewState extends State<MapView> {
     } catch (e) {
       print(e);
     }
-
     PolylineId id = PolylineId('poly');
     Polyline polyline = Polyline(
       polylineId: id,
