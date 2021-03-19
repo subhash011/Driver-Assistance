@@ -303,6 +303,7 @@ class _MapViewState extends State<MapView> {
         var location = await mapService.getCurrentLocation();
         print(location);
         mapService.addMarker(location);
+        setState(() {});
       }
     });
   }
