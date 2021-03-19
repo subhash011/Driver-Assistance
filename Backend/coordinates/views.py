@@ -17,10 +17,10 @@ class CoordinateViewSet(ModelViewSet):
 class FindObstacles(APIView):
 
     def post(self, request, format=None):
-        theshold = 1
+        theshold = 0.02
         obstacles = np.array([np.array([obstacle.lat, obstacle.lon]) for obstacle in Coordinate.objects.all()])
         route_pts = np.array(request.data)
-        route = interp1d(route_pts[:, 0], route_pts[:, 1])
+        route = interp1d(route_pts[:, 0], route_pts[:, 1], bounds_error=False)
         preds = route(obstacles[:, 0])
         labels = obstacles[:, 1]
         in_path_index = np.abs(preds-labels) < theshold
