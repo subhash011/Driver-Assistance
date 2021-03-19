@@ -1,5 +1,6 @@
 // @dart=2.10
 
+import 'package:PotholeDetector/services/api.dart';
 import 'package:PotholeDetector/services/maps.dart';
 import 'package:PotholeDetector/services/obstacle.dart';
 import 'package:PotholeDetector/services/voice.dart';
@@ -268,12 +269,17 @@ class _MapViewState extends State<MapView> {
       // We can reach to our desired JSON data manually as following
       LineString ls =
           LineString(data['features'][0]['geometry']['coordinates']);
-
+      List<List<double>> dat = [];
       for (int i = 0; i < ls.lineString.length; i++) {
+        dat.add([ls.lineString[i][1], ls.lineString[i][0]]);
         polylineCoordinates
             .add(LatLng(ls.lineString[i][1], ls.lineString[i][0]));
       }
-
+      var obstacles = await Api().getObstacles(dat);
+      for (var obstacle in obstacles) {
+        await mapService
+            .addMarker(Position(latitude: obstacle[0], longitude: obstacle[1]));
+      }
       if (polylineCoordinates.length == ls.lineString.length) {
         setPolyLines(polylineCoordinates, polyLines);
       }
@@ -298,10 +304,9 @@ class _MapViewState extends State<MapView> {
     _getCurrentLocation();
     obs.signal.stream.listen((event) async {
       if (event >= 1) {
-        print("Obstacle Detected !!; $event");
+        print("obs");
         var location = await mapService.getCurrentLocation();
-        print(location);
-        mapService.addMarker(location);
+        await Api().addObstacle(location.latitude, location.longitude);
         setState(() {});
       }
     });

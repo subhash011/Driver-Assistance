@@ -5,6 +5,7 @@ mobile_app/lib/test.dart
 Backend/.idea
 Backend/venv
 Backend/db.sqlite3
+**/__pycache__
 
 # Miscellaneous
 *.class

@@ -1,24 +1,31 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:http/http.dart' as http;
 
 class Api {
-  static String backend = "http://127.0.0.1:8000/api/";
+  static String backend = "10.0.2.2:8000";
 
-  Future addObstacle(lat, lon, [desc=Null]) {
-    var url = Uri.https(backend, 'coordinates');
-    var response = http.post(url, body: {
-      'lat': lat,
-      'lon': lon,
-      'desc': desc
-    });
+  Map<String, String> headers = {
+    'Content-type': 'application/json',
+    'Accept': 'application/json',
+  };
+
+  addObstacle(lat, lon, [desc = ""]) async {
+    var url = Uri.http(backend, '/api/coordinates/');
+    var response = await http.post(url,
+        body: jsonEncode(
+            {'lat': lat.toString(), 'lon': lon.toString(), 'desc': desc}),
+        headers: headers);
     return response;
   }
 
   // The route parameter is list of [lat, lon] (The route)
   // The response is list of [lat, lon] (Obstacles)
-  Future getObstacles(List<List<double>> route) {
-    var url = Uri.https(backend, 'obstacles');
-    var response = http.post(url, body: route);
-    return response;
+  getObstacles(List<List<double>> route) async {
+    var url = Uri.http(backend, '/api/obstacles/');
+    var response =
+        await http.post(url, body: jsonEncode(route), headers: headers);
+    return jsonDecode(response.body);
   }
-
 }
