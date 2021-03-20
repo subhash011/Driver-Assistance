@@ -1,20 +1,14 @@
 // @dart=2.10
 
-import 'package:PotholeDetector/services/api.dart';
 import 'package:PotholeDetector/services/maps.dart';
 import 'package:PotholeDetector/services/obstacle.dart';
 import 'package:PotholeDetector/services/voice.dart';
 import 'package:flutter/material.dart';
 import 'package:PotholeDetector/widgets/maps/secrets.dart'; // Stores the Google Maps API Key
-import 'package:flutter_polyline_points/flutter_polyline_points.dart';
-import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_mapbox_autocomplete/flutter_mapbox_autocomplete.dart'
     as FLAutoComplete;
-import 'dart:math' show cos, sqrt, asin;
-
-import 'network.dart';
 
 class LineString {
   LineString(this.lineString);
@@ -42,10 +36,6 @@ class _MapViewState extends State<MapView> {
 
   String _startAddress = '';
   String _destinationAddress = '';
-
-  PolylinePoints polylinePoints;
-  Map<PolylineId, Polyline> polylines = {};
-  List<LatLng> polylineCoordinates = [];
 
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -119,8 +109,12 @@ class _MapViewState extends State<MapView> {
   // Method for retrieving the current location
   _getCurrentLocation() async {
     Position position = await mapService.getCurrentLocation();
+    String address = await mapService.getAddress(position);
     setState(() {
       _currentPosition = position;
+      _currentAddress = address;
+      startAddressController.text = _currentAddress;
+      _startAddress = _currentAddress;
       mapController.animateCamera(
         CameraUpdate.newCameraPosition(
           CameraPosition(
@@ -130,170 +124,6 @@ class _MapViewState extends State<MapView> {
         ),
       );
     });
-    String address = await mapService.getAddress(position);
-    setState(() {
-      _currentAddress = address;
-      startAddressController.text = _currentAddress;
-      _startAddress = _currentAddress;
-    });
-  }
-
-  // Method for calculating the distance between two places
-  Future<bool> _calculateDistance() async {
-    try {
-      // Retrieving placemarks from addresses
-      List<Location> startPlacemark = await locationFromAddress(_startAddress);
-      List<Location> destinationPlacemark =
-          await locationFromAddress(_destinationAddress);
-      if (startPlacemark != null && destinationPlacemark != null) {
-        // Use the retrieved coordinates of the current position,
-        // instead of the address if the start position is user's
-        // current position, as it results in better accuracy.
-        Position startCoordinates = _startAddress == _currentAddress
-            ? Position(
-                latitude: _currentPosition.latitude,
-                longitude: _currentPosition.longitude)
-            : Position(
-                latitude: startPlacemark[0].latitude,
-                longitude: startPlacemark[0].longitude);
-        Position destinationCoordinates = Position(
-            latitude: destinationPlacemark[0].latitude,
-            longitude: destinationPlacemark[0].longitude);
-
-        // Adding the markers to the list
-        mapService.addMarker(startCoordinates, false, "Start");
-        mapService.addMarker(destinationCoordinates, false, "Destination");
-
-        Position _northeastCoordinates;
-        Position _southwestCoordinates;
-
-        // Calculating to check that the position relative
-        // to the frame, and pan & zoom the camera accordingly.
-        double miny =
-            (startCoordinates.latitude <= destinationCoordinates.latitude)
-                ? startCoordinates.latitude
-                : destinationCoordinates.latitude;
-        double minx =
-            (startCoordinates.longitude <= destinationCoordinates.longitude)
-                ? startCoordinates.longitude
-                : destinationCoordinates.longitude;
-        double maxy =
-            (startCoordinates.latitude <= destinationCoordinates.latitude)
-                ? destinationCoordinates.latitude
-                : startCoordinates.latitude;
-        double maxx =
-            (startCoordinates.longitude <= destinationCoordinates.longitude)
-                ? destinationCoordinates.longitude
-                : startCoordinates.longitude;
-
-        _southwestCoordinates = Position(latitude: miny, longitude: minx);
-        _northeastCoordinates = Position(latitude: maxy, longitude: maxx);
-
-        // Accommodate the two locations within the
-        // camera view of the map
-        mapController.animateCamera(
-          CameraUpdate.newLatLngBounds(
-            LatLngBounds(
-              northeast: LatLng(
-                _northeastCoordinates.latitude,
-                _northeastCoordinates.longitude,
-              ),
-              southwest: LatLng(
-                _southwestCoordinates.latitude,
-                _southwestCoordinates.longitude,
-              ),
-            ),
-            100.0,
-          ),
-        );
-
-        await _createPolylines(startCoordinates, destinationCoordinates);
-
-        double totalDistance = 0.0;
-
-        // Calculating the total distance by adding the distance
-        // between small segments
-        for (int i = 0; i < polylineCoordinates.length - 1; i++) {
-          totalDistance += _coordinateDistance(
-            polylineCoordinates[i].latitude,
-            polylineCoordinates[i].longitude,
-            polylineCoordinates[i + 1].latitude,
-            polylineCoordinates[i + 1].longitude,
-          );
-        }
-
-        setState(() {});
-
-        return true;
-      }
-    } catch (e) {
-      print(e);
-    }
-    return false;
-  }
-
-  // Formula for calculating distance between two coordinates
-  // https://stackoverflow.com/a/54138876/11910277
-  double _coordinateDistance(lat1, lon1, lat2, lon2) {
-    var p = 0.017453292519943295;
-    var c = cos;
-    var a = 0.5 -
-        c((lat2 - lat1) * p) / 2 +
-        c(lat1 * p) * c(lat2 * p) * (1 - c((lon2 - lon1) * p)) / 2;
-    return 12742 * asin(sqrt(a));
-  }
-
-  setPolyLines(List<LatLng> polyPoints, Set<Polyline> polyLines) {
-    Polyline polyline = Polyline(
-      polylineId: PolylineId("polyline"),
-      color: Colors.lightBlue,
-      points: polyPoints,
-    );
-    polyLines.add(polyline);
-    setState(() {});
-  }
-
-  // Create the polylines for showing the route between two places
-  _createPolylines(Position start, Position destination) async {
-    NetworkHelper network = NetworkHelper(
-      startLat: start.latitude,
-      startLng: start.longitude,
-      endLat: destination.latitude,
-      endLng: destination.longitude,
-    );
-    final Set<Polyline> polyLines = {}; // For holding instance of Polyline
-
-    try {
-      // getData() returns a json Decoded data
-      var data = await network.getData();
-      // We can reach to our desired JSON data manually as following
-      LineString ls =
-          LineString(data['features'][0]['geometry']['coordinates']);
-      List<List<double>> dat = [];
-      for (int i = 0; i < ls.lineString.length; i++) {
-        dat.add([ls.lineString[i][1], ls.lineString[i][0]]);
-        polylineCoordinates
-            .add(LatLng(ls.lineString[i][1], ls.lineString[i][0]));
-      }
-      var obstacles = await Api().getObstacles(dat);
-      for (var obstacle in obstacles) {
-        await mapService
-            .addMarker(Position(latitude: obstacle[0], longitude: obstacle[1]));
-      }
-      if (polylineCoordinates.length == ls.lineString.length) {
-        setPolyLines(polylineCoordinates, polyLines);
-      }
-    } catch (e) {
-      print(e);
-    }
-    PolylineId id = PolylineId('poly');
-    Polyline polyline = Polyline(
-      polylineId: id,
-      color: Colors.green,
-      points: polylineCoordinates,
-      width: 3,
-    );
-    polylines[id] = polyline;
   }
 
   @override
@@ -301,12 +131,9 @@ class _MapViewState extends State<MapView> {
     Obstacles obs = Obstacles();
     Voice voice = Voice();
     super.initState();
-    _getCurrentLocation();
     obs.signal.stream.listen((event) async {
       if (event >= 1) {
-        print("obs");
-        var location = await mapService.getCurrentLocation();
-        await Api().addObstacle(location.latitude, location.longitude);
+        mapService.addObstacle();
         setState(() {});
       }
     });
@@ -334,17 +161,18 @@ class _MapViewState extends State<MapView> {
               mapType: MapType.normal,
               zoomGesturesEnabled: true,
               zoomControlsEnabled: false,
-              polylines: Set<Polyline>.of(polylines.values),
-              onMapCreated: (GoogleMapController controller) {
+              polylines: Set<Polyline>.of(mapService.polylines.values),
+              onMapCreated: (GoogleMapController controller) async {
                 mapController = controller;
+                await _getCurrentLocation();
               },
             ),
             // Show zoom buttons
             SafeArea(
               child: Padding(
-                padding: const EdgeInsets.only(left: 10.0),
+                padding: const EdgeInsets.only(left: 10.0, bottom: 10.0),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: <Widget>[
                     ClipOval(
                       child: Material(
@@ -354,7 +182,7 @@ class _MapViewState extends State<MapView> {
                           child: SizedBox(
                             width: 50,
                             height: 50,
-                            child: Icon(Icons.add),
+                            child: Icon(Icons.zoom_in),
                           ),
                           onTap: () {
                             mapController.animateCamera(
@@ -373,7 +201,7 @@ class _MapViewState extends State<MapView> {
                           child: SizedBox(
                             width: 50,
                             height: 50,
-                            child: Icon(Icons.remove),
+                            child: Icon(Icons.zoom_out),
                           ),
                           onTap: () {
                             mapController.animateCamera(
@@ -384,6 +212,21 @@ class _MapViewState extends State<MapView> {
                       ),
                     )
                   ],
+                ),
+              ),
+            ),
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 10.0, left: 10.0),
+                  child: ElevatedButton(
+                    child: Text("Add Obstacle here"),
+                    onPressed: () {
+                      mapService.addObstacle();
+                      setState(() {});
+                    },
+                  ),
                 ),
               ),
             ),
@@ -464,19 +307,43 @@ class _MapViewState extends State<MapView> {
                                     setState(() {
                                       if (mapService.markers.isNotEmpty)
                                         mapService.markers.clear();
-                                      if (polylines.isNotEmpty)
-                                        polylines.clear();
-                                      if (polylineCoordinates.isNotEmpty)
-                                        polylineCoordinates.clear();
+                                      if (mapService.polylines.isNotEmpty)
+                                        mapService.polylines.clear();
+                                      if (mapService
+                                          .polylineCoordinates.isNotEmpty)
+                                        mapService.polylineCoordinates.clear();
                                     });
-
+                                    double totalDistance = -1;
                                     try {
-                                      var isCalculated =
-                                          await _calculateDistance();
+                                      totalDistance = await mapService.mapRoute(
+                                          _startAddress,
+                                          _destinationAddress,
+                                          _currentAddress,
+                                          _currentPosition,
+                                          mapController);
                                     } catch (e) {
                                       print(e);
                                     } finally {
+                                      setState(() {});
                                       Navigator.of(context).pop();
+                                      final snackBar = SnackBar(
+                                        content: Text(
+                                          totalDistance >= 0
+                                              ? totalDistance
+                                                      .toStringAsFixed(2) +
+                                                  " km"
+                                              : "There was some error!",
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        action: SnackBarAction(
+                                          label: 'Ok',
+                                          onPressed: () {
+                                            // Some code to undo the change.
+                                          },
+                                        ),
+                                      );
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(snackBar);
                                     }
                                   },
                                   child: Container(
