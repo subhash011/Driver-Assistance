@@ -20,9 +20,15 @@ class Api {
     return response;
   }
 
+  getAllObstacles() async {
+    var url = Uri.http(backend, '/api/coordinates/');
+    var response = await http.get(url, headers: headers);
+    return jsonDecode(response.body);
+  }
+
   // The route parameter is list of [lat, lon] (The route)
   // The response is list of [lat, lon] (Obstacles)
-  getObstacles(List<List<double>> route) async {
+  getObstaclesOnRoute(List<List<double>> route) async {
     var url = Uri.http(backend, '/api/obstacles/');
     var response =
         await http.post(url, body: jsonEncode(route), headers: headers);

@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_map_polyutil/google_map_polyutil.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class MapService {
@@ -107,10 +108,14 @@ class MapService {
             .add(LatLng(ls.lineString[i][1], ls.lineString[i][0]));
       }
       var obstacles = [];
-      obstacles = await api.getObstacles(dat);
+      obstacles = await api.getAllObstacles();
       for (var obstacle in obstacles) {
-        await this
-            .addMarker(Position(latitude: obstacle[0], longitude: obstacle[1]));
+        LatLng point = LatLng(obstacle['lat'], obstacle['lon']);
+        if (await GoogleMapPolyUtil.isLocationOnEdge(
+            point: point, polygon: polylineCoordinates)) {
+          await this.addMarker(
+              Position(latitude: point.latitude, longitude: point.longitude));
+        }
       }
     } catch (e) {
       print(e);
@@ -135,6 +140,7 @@ class MapService {
       List<Location> startPlacemark = await locationFromAddress(_startAddress);
       List<Location> destinationPlacemark =
           await locationFromAddress(_destinationAddress);
+
       if (startPlacemark != null && destinationPlacemark != null) {
         // Use the retrieved coordinates of the current position,
         // instead of the address if the start position is user's

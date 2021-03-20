@@ -44,6 +44,7 @@ dependencies:
   vector_math: ^2.1.0
   flutter_tts: ^2.1.0
   fluttertoast: ^7.1.6
+  google_map_polyutil: ^1.0.1
 
 
 dev_dependencies:
