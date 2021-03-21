@@ -56,8 +56,12 @@ class Obstacles {
 
   rule(values) {
     List<double> deviations = sampleDeviations(values);
-    double mean = deviations.reduce((value, element) => value + element) /
-        deviations.length;
+    double mean = 0;
+    if (deviations.length > 0) {
+      mean = deviations.reduce((value, element) => value + element) /
+          deviations.length;
+    }
+
     if (Config.verboseMean) {
       print("###############################");
       print("mean = $mean");
