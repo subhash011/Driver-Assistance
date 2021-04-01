@@ -1,5 +1,7 @@
 // @dart=2.10
 
+import 'dart:async';
+
 import 'package:PotholeDetector/services/maps.dart';
 import 'package:PotholeDetector/services/obstacle.dart';
 import 'package:PotholeDetector/services/voice.dart';
@@ -22,11 +24,11 @@ class MapView extends StatefulWidget {
 
 class _MapViewState extends State<MapView> {
   CameraPosition _initialLocation = CameraPosition(target: LatLng(0.0, 0.0));
+  Completer<GoogleMapController> _controller = Completer();
   GoogleMapController mapController;
   MapService mapService = MapService();
 
-  Position _currentPosition;
-  String _currentAddress;
+  double CAMERA_ZOOM = 18;
 
   final startAddressController = TextEditingController();
   final destinationAddressController = TextEditingController();
@@ -108,21 +110,54 @@ class _MapViewState extends State<MapView> {
 
   // Method for retrieving the current location
   _getCurrentLocation() async {
+    if (mapService.locImg == null) {
+      await mapService.setImages();
+    }
     Position position = await mapService.getCurrentLocation();
     String address = await mapService.getAddress(position);
     setState(() {
-      _currentPosition = position;
-      _currentAddress = address;
-      startAddressController.text = _currentAddress;
-      _startAddress = _currentAddress;
+      mapService.currentPosition = position;
+      mapService.currentAddress = address;
+      startAddressController.text = mapService.currentAddress;
+      _startAddress = mapService.currentAddress;
       mapController.animateCamera(
         CameraUpdate.newCameraPosition(
           CameraPosition(
             target: LatLng(position.latitude, position.longitude),
-            zoom: 18.0,
+            zoom: CAMERA_ZOOM,
           ),
         ),
       );
+    });
+  }
+
+  void updatePinOnMap() async {
+    if (mapService.locImg == null) {
+      await mapService.setImages();
+    }
+    // create a new CameraPosition instance
+    // every time the location changes, so the camera
+    // follows the pin as it moves with an animation
+    // CameraPosition cPosition = CameraPosition(
+    //   zoom: CAMERA_ZOOM,
+    //   target: LatLng(mapService.currentPosition.latitude,
+    //       mapService.currentPosition.longitude),
+    // );
+    // final GoogleMapController controller = await _controller.future;
+    // controller.animateCamera(CameraUpdate.newCameraPosition(cPosition));
+    // do this inside the setState() so Flutter gets notified
+    // that a widget update is due
+    setState(() {
+      var pinPosition = LatLng(mapService.currentPosition.latitude,
+          mapService.currentPosition.longitude);
+
+      // the trick is to remove the marker (by id)
+      // and add it again at the updated location
+      mapService.markers.removeWhere((m) => m.markerId.value == 'Start');
+      mapService.markers.add(Marker(
+          markerId: MarkerId('Start'),
+          position: pinPosition, // updated position
+          icon: BitmapDescriptor.fromBytes(mapService.locImg)));
     });
   }
 
@@ -131,6 +166,13 @@ class _MapViewState extends State<MapView> {
     Obstacles obs = Obstacles();
     Voice voice = Voice();
     super.initState();
+    Geolocator.getPositionStream(
+            desiredAccuracy: LocationAccuracy.bestForNavigation)
+        .listen((Position position) {
+      mapService.currentPosition = position;
+      updatePinOnMap();
+      setState(() {});
+    });
     obs.signal.stream.listen((event) async {
       if (event >= 1) {
         mapService.addObstacle();
@@ -156,14 +198,15 @@ class _MapViewState extends State<MapView> {
                   ? Set<Marker>.from(mapService.markers)
                   : null,
               initialCameraPosition: _initialLocation,
-              myLocationEnabled: true,
-              myLocationButtonEnabled: false,
+              myLocationEnabled: false,
+              compassEnabled: true,
               mapType: MapType.normal,
               zoomGesturesEnabled: true,
               zoomControlsEnabled: false,
               polylines: Set<Polyline>.of(mapService.polylines.values),
               onMapCreated: (GoogleMapController controller) async {
                 mapController = controller;
+                _controller.complete(controller);
                 await _getCurrentLocation();
               },
             ),
@@ -188,6 +231,9 @@ class _MapViewState extends State<MapView> {
                             mapController.animateCamera(
                               CameraUpdate.zoomIn(),
                             );
+                            setState(() {
+                              CAMERA_ZOOM += 1;
+                            });
                           },
                         ),
                       ),
@@ -207,6 +253,9 @@ class _MapViewState extends State<MapView> {
                             mapController.animateCamera(
                               CameraUpdate.zoomOut(),
                             );
+                            setState(() {
+                              CAMERA_ZOOM -= 1;
+                            });
                           },
                         ),
                       ),
@@ -269,8 +318,8 @@ class _MapViewState extends State<MapView> {
                                     icon: Icon(Icons.my_location),
                                     onPressed: () {
                                       startAddressController.text =
-                                          _currentAddress;
-                                      _startAddress = _currentAddress;
+                                          mapService.currentAddress;
+                                      _startAddress = mapService.currentAddress;
                                     },
                                   ),
                                   controller: startAddressController,
@@ -318,8 +367,8 @@ class _MapViewState extends State<MapView> {
                                       totalDistance = await mapService.mapRoute(
                                           _startAddress,
                                           _destinationAddress,
-                                          _currentAddress,
-                                          _currentPosition,
+                                          mapService.currentAddress,
+                                          mapService.currentPosition,
                                           mapController);
                                     } catch (e) {
                                       print(e);
@@ -393,17 +442,6 @@ class _MapViewState extends State<MapView> {
                         ),
                         onTap: () async {
                           await _getCurrentLocation();
-                          mapController.animateCamera(
-                            CameraUpdate.newCameraPosition(
-                              CameraPosition(
-                                target: LatLng(
-                                  _currentPosition.latitude,
-                                  _currentPosition.longitude,
-                                ),
-                                zoom: 18.0,
-                              ),
-                            ),
-                          );
                         },
                       ),
                     ),

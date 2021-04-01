@@ -14,10 +14,18 @@ import 'package:google_map_polyutil/google_map_polyutil.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class MapService {
+  Position currentPosition;
+  String currentAddress;
   Set<Marker> markers = {};
   PolylinePoints polylinePoints;
   Map<PolylineId, Polyline> polylines = {};
   List<LatLng> polylineCoordinates = [];
+  Uint8List locImg, obstImg;
+
+  Future<void> setImages() async {
+    this.locImg = await this.getBytesFromAsset("assets/images/loc.png", 64);
+    this.obstImg = await this.getBytesFromAsset("assets/images/dot.png", 24);
+  }
 
   getAddress(Position position) async {
     try {
@@ -57,18 +65,17 @@ class MapService {
         snippet: address,
       ),
       icon: isObstacle
-          ? BitmapDescriptor.fromBytes(
-              await this.getBytesFromAsset("assets/images/dot.png", 24))
-          : BitmapDescriptor.defaultMarker,
+          ? BitmapDescriptor.fromBytes(this.obstImg)
+          : BitmapDescriptor.fromBytes(this.locImg),
     );
     this.markers.add(marker);
   }
 
   addObstacle() async {
     Api api = Api();
-    Position location = await this.getCurrentLocation();
-    await api.addObstacle(location.latitude, location.longitude);
-    await this.addMarker(location);
+    await api.addObstacle(
+        this.currentPosition.latitude, this.currentPosition.longitude);
+    await this.addMarker(this.currentPosition);
   }
 
   getCurrentLocation() async {
