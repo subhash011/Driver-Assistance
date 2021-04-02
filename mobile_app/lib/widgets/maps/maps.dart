@@ -135,9 +135,6 @@ class _MapViewState extends State<MapView> {
     if (mapService.locImg == null) {
       await mapService.setImages();
     }
-    // create a new CameraPosition instance
-    // every time the location changes, so the camera
-    // follows the pin as it moves with an animation
     // CameraPosition cPosition = CameraPosition(
     //   zoom: CAMERA_ZOOM,
     //   target: LatLng(mapService.currentPosition.latitude,
@@ -145,8 +142,9 @@ class _MapViewState extends State<MapView> {
     // );
     // final GoogleMapController controller = await _controller.future;
     // controller.animateCamera(CameraUpdate.newCameraPosition(cPosition));
-    // do this inside the setState() so Flutter gets notified
-    // that a widget update is due
+
+    if (!mounted) return;
+
     setState(() {
       var pinPosition = LatLng(mapService.currentPosition.latitude,
           mapService.currentPosition.longitude);
@@ -171,7 +169,6 @@ class _MapViewState extends State<MapView> {
         .listen((Position position) {
       mapService.currentPosition = position;
       updatePinOnMap();
-      setState(() {});
     });
     obs.signal.stream.listen((event) async {
       if (event >= 1) {
