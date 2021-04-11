@@ -10,12 +10,12 @@ class SharedPreference {
 
   static setFirst() async {
     SharedPreferences prefs = await getPreferences();
-    prefs.setBool('first', true);
+    prefs.setBool('first', false);
   }
 
   static get first async {
     SharedPreferences prefs = await getPreferences();
-    return prefs.getBool('first');
+    return prefs.getBool('first') ?? true;
   }
 
 }
