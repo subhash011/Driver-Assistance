@@ -1,6 +1,4 @@
 import 'package:PotholeDetector/services/maps.dart';
-import 'package:PotholeDetector/services/obstacle.dart';
-import 'package:PotholeDetector/services/voice.dart';
 import 'package:PotholeDetector/widgets/accelerometer/accelerometer.dart';
 import 'package:PotholeDetector/widgets/maps/maps.dart';
 import 'package:flutter/material.dart';
