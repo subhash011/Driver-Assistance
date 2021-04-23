@@ -13,9 +13,13 @@ class SharedPreference {
     prefs.setBool('first', false);
   }
 
+  static clear() async {
+    SharedPreferences prefs = await getPreferences();
+    prefs.clear();
+  }
+
   static get first async {
     SharedPreferences prefs = await getPreferences();
     return prefs.getBool('first') ?? true;
   }
-
 }

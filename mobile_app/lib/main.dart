@@ -1,4 +1,5 @@
 import 'package:PotholeDetector/shared_preference.dart';
+import 'package:PotholeDetector/widgets/auth/login.dart';
 import 'package:PotholeDetector/widgets/home.dart';
 import 'package:flutter/material.dart';
 import 'package:introduction_screen/introduction_screen.dart';
@@ -13,24 +14,25 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-
   Future<bool> firstInfo() async {
-    bool first = await SharedPreference.first;
+    bool first = true;
     return first;
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(home: FutureBuilder(
-      future: firstInfo(),
-      builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
-        if (snapshot.hasData) {
-          return snapshot.data ? Intro() : Home();
-        } else {
-          return Text("Loading ...");
-        }
-      },
-    ));
+    return MaterialApp(
+      home: FutureBuilder(
+        future: firstInfo(),
+        builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+          if (snapshot.hasData) {
+            return snapshot.data ? Intro() : Home();
+          } else {
+            return Text("Loading ...");
+          }
+        },
+      ),
+    );
   }
 }
 
@@ -57,6 +59,12 @@ class _IntroState extends State<Intro> {
       MaterialPageRoute(builder: (_) => Home()),
     );
   }
+
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   SharedPreference.clear();
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -85,16 +93,20 @@ class _IntroState extends State<Intro> {
       pages: [
         PageViewModel(
           title: "Welcome to Pegasus",
-          body:
-          "Fly with Safety",
+          body: "Fly with Safety",
           decoration: pageDecoration,
         ),
         PageViewModel(
           title: "About",
           body:
-          "Pegasus is a robust app that detects obstacles along your path, "
+              "Pegasus is a robust app that detects obstacles along your path, "
               "alerts upcoming obstacles, and ensure your safety.",
           decoration: pageDecoration,
+        ),
+        PageViewModel(
+          title: "Login/Register.",
+          bodyWidget: Login(),
+          useScrollView: true,
         )
       ],
       onDone: () => _onIntroEnd(context),
