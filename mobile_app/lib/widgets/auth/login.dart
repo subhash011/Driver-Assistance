@@ -1,3 +1,6 @@
+import 'package:PotholeDetector/services/auth.dart';
+import 'package:PotholeDetector/shared_preference.dart';
+import 'package:PotholeDetector/widgets/home.dart';
 import 'package:flutter/material.dart';
 
 class Login extends StatefulWidget {
@@ -7,13 +10,12 @@ class Login extends StatefulWidget {
 
 class _LoginState extends State<Login> {
   TextStyle style = TextStyle(fontFamily: 'Montserrat', fontSize: 20.0);
+  bool toRegister = false;
+  final TextEditingController _emailController = new TextEditingController();
+  final TextEditingController _passwordController = new TextEditingController();
 
   @override
   Widget build(BuildContext context) {
-    final TextEditingController _emailController = new TextEditingController();
-    final TextEditingController _passwordController =
-        new TextEditingController();
-
     final emailField = TextField(
       obscureText: false,
       style: style,
@@ -41,9 +43,46 @@ class _LoginState extends State<Login> {
       child: MaterialButton(
         minWidth: MediaQuery.of(context).size.width,
         padding: EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
-        onPressed: () {
+        onPressed: () async {
           String email = _emailController.text;
           String password = _passwordController.text;
+          bool response;
+          if (this.toRegister) {
+            response = await Auth.signup(email, password);
+            if (!response) {
+              final snackBar = SnackBar(
+                content: Text('User already exists, Please login.'),
+                action: SnackBarAction(
+                  label: 'Ok',
+                  onPressed: () {
+                    this.toRegister = false;
+                    setState(() {});
+                  },
+                ),
+              );
+              ScaffoldMessenger.of(context).showSnackBar(snackBar);
+            }
+          } else {
+            response = await Auth.login(email, password);
+            if (response) {
+              SharedPreference.setFirst();
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => Home()),
+              );
+            } else {
+              final snackBar = SnackBar(
+                content: Text('Invalid username or password.'),
+                action: SnackBarAction(
+                  label: 'Ok',
+                  onPressed: () {
+                    this.toRegister = false;
+                    setState(() {});
+                  },
+                ),
+              );
+              ScaffoldMessenger.of(context).showSnackBar(snackBar);
+            }
+          }
         },
         child: Text("Login",
             textAlign: TextAlign.center,
@@ -64,7 +103,7 @@ class _LoginState extends State<Login> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   SizedBox(
-                    height: 155.0,
+                    height: 60.0,
                     child: Image.asset(
                       "assets/images/loc.png",
                       fit: BoxFit.contain,
@@ -75,7 +114,23 @@ class _LoginState extends State<Login> {
                   SizedBox(height: 25.0),
                   passwordField,
                   SizedBox(
-                    height: 35.0,
+                    height: 15.0,
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text("First time"),
+                      Checkbox(
+                        value: this.toRegister,
+                        onChanged: (bool value) {
+                          this.toRegister = value;
+                          setState(() {});
+                        },
+                      )
+                    ],
+                  ),
+                  SizedBox(
+                    height: 15.0,
                   ),
                   loginButon,
                   SizedBox(

@@ -135,13 +135,13 @@ class _MapViewState extends State<MapView> {
     if (mapService.locImg == null) {
       await mapService.setImages();
     }
-    // CameraPosition cPosition = CameraPosition(
-    //   zoom: CAMERA_ZOOM,
-    //   target: LatLng(mapService.currentPosition.latitude,
-    //       mapService.currentPosition.longitude),
-    // );
-    // final GoogleMapController controller = await _controller.future;
-    // controller.animateCamera(CameraUpdate.newCameraPosition(cPosition));
+    CameraPosition cPosition = CameraPosition(
+      zoom: CAMERA_ZOOM,
+      target: LatLng(mapService.currentPosition.latitude,
+          mapService.currentPosition.longitude),
+    );
+    final GoogleMapController controller = await _controller.future;
+    controller.animateCamera(CameraUpdate.newCameraPosition(cPosition));
 
     if (!mounted) return;
 

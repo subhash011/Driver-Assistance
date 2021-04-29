@@ -3,6 +3,7 @@ import 'package:PotholeDetector/widgets/auth/login.dart';
 import 'package:PotholeDetector/widgets/home.dart';
 import 'package:flutter/material.dart';
 import 'package:introduction_screen/introduction_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(MyApp());
@@ -15,7 +16,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   Future<bool> firstInfo() async {
-    bool first = true;
+    bool first = await SharedPreference.first;
     return first;
   }
 
@@ -59,12 +60,6 @@ class _IntroState extends State<Intro> {
       MaterialPageRoute(builder: (_) => Home()),
     );
   }
-
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   SharedPreference.clear();
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -111,6 +106,7 @@ class _IntroState extends State<Intro> {
       ],
       onDone: () => _onIntroEnd(context),
       showSkipButton: true,
+      showDoneButton: false,
       skipFlex: 0,
       nextFlex: 0,
       //rtl: true, // Display as right-to-left
