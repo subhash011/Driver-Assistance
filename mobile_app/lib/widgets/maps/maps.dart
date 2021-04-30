@@ -172,6 +172,7 @@ class _MapViewState extends State<MapView> {
     });
     obs.signal.stream.listen((event) async {
       if (event >= 1) {
+        print("Obstacle Detected !");
         mapService.addObstacle();
         setState(() {});
       }

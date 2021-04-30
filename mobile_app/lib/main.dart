@@ -17,7 +17,8 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   Future<bool> firstInfo() async {
     bool first = await SharedPreference.first;
-    return first;
+    // return first;
+    return false;
   }
 
   @override
